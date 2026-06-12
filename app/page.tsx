@@ -5,7 +5,9 @@ import TagPills from '@/components/TagPills';
 import RecommendedSection from '@/components/RecommendedSection';
 import { prisma } from '@/lib/prisma';
 
-export const revalidate = 60;
+// Эта строка заставляет Next.js выполнять этот запрос только 
+// при запросе реального пользователя, предотвращая зависание билда
+export const dynamic = 'force-dynamic';
 
 const formatAgo = (publishedAt: Date) => {
   const diff = Date.now() - publishedAt.getTime();
