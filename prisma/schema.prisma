@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  email       String    @unique
+  username    String    @unique
+  name        String
+  avatarUrl   String?
+  bio         String?
+  isVerified  Boolean   @default(false)
+  videos      Video[]
+  playlists   Playlist[]
+  favorites   Favorite[]
+  viewHistory ViewHistory[]
+  comments    Comment[]
+  followers   Follow[]  @relation("FollowingFollows")
+  following   Follow[]  @relation("FollowerFollows")
+}
+
+model Video {
+  id           String        @id @default(cuid())
+  title        String
+  description  String
+  slug         String        @unique
+  duration     Int
+  publishedAt  DateTime      @default(now())
+  views        Int           @default(0)
+  likeCount    Int           @default(0)
+  privacy      Privacy       @default(PUBLIC)
+  thumbnailUrl String
+  videoUrl     String
+  qualityUrls  QualityUrl[]
+  author       User          @relation(fields: [authorId], references: [id])
+  authorId     String
+  playlists    PlaylistItem[]
+  tags         Tag[]
+  comments     Comment[]
+  favorites    Favorite[]
+  viewHistory  ViewHistory[]
+}
+
+model QualityUrl {
+  id      String @id @default(cuid())
+  quality String
+  url     String
+  video   Video  @relation(fields: [videoId], references: [id])
+  videoId String
+}
+
+model Playlist {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  isPublic    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  owner       User           @relation(fields: [ownerId], references: [id])
+  ownerId     String
+  items       PlaylistItem[]
+}
+
+model PlaylistItem {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  playlist   Playlist @relation(fields: [playlistId], references: [id])
+  playlistId String
+  video      Video    @relation(fields: [videoId], references: [id])
+  videoId    String
+}
+
+model Tag {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  slug   String  @unique
+  videos Video[]
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  content   String
+  createdAt DateTime  @default(now())
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  String
+  video     Video     @relation(fields: [videoId], references: [id])
+  videoId   String
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  parentId  String?
+  replies   Comment[] @relation("CommentReplies")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  video     Video    @relation(fields: [videoId], references: [id])
+  videoId   String
+}
+
+model ViewHistory {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  video      Video    @relation(fields: [videoId], references: [id])
+  videoId    String
+  watchedAt  DateTime @default(now())
+  progress   Int      @default(0)
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  follower    User     @relation("FollowerFollows", fields: [followerId], references: [id])
+  followerId  String
+  following   User     @relation("FollowingFollows", fields: [followingId], references: [id])
+  followingId String
+  createdAt   DateTime @default(now())
+}
+
+enum Privacy {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+}
